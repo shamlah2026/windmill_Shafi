@@ -1,0 +1,60 @@
+# Windmill flow blueprint for the dentist appointment assistant.
+#
+# Important: Windmill may export flows using its own generated YAML schema.
+# Use this file as the intended orchestration map, then replace/update it with
+# Windmill's exported flow once the flow is built in the Cloud UI.
+
+name: dentist_appointment_flow
+summary: Receive WhatsApp appointment requests, check calendar availability, book, and reply.
+trigger:
+  type: webhook
+  source: meta_whatsapp
+
+inputs:
+  payload: Meta WhatsApp webhook JSON body
+
+steps:
+  - id: extract_appointment
+    script: scripts/extract_appointment.py
+    input:
+      payload: ${flow.input.payload}
+      default_duration_minutes: 30
+
+  - id: check_calendar_availability
+    script: scripts/check_calendar_availability.py
+    when: ${steps.extract_appointment.needs_clarification == false}
+    input:
+      appointment: ${steps.extract_appointment}
+      google_access_token: ${secrets.u.google.calendar_access_token}
+      calendar_id: ${variables.u.google.calendar_id}
+
+  - id: create_calendar_event
+    script: scripts/create_calendar_event.py
+    when: ${steps.check_calendar_availability.available == true}
+    input:
+      appointment: ${steps.check_calendar_availability}
+      google_access_token: ${secrets.u.google.calendar_access_token}
+      calendar_id: ${variables.u.google.calendar_id}
+      clinic_timezone: Europe/Berlin
+
+  - id: generate_reply_after_booking
+    script: scripts/generate_reply.py
+    when: ${steps.extract_appointment.needs_clarification == false}
+    input:
+      appointment: ${steps.create_calendar_event || steps.check_calendar_availability}
+      clinic_name: Shafi Dental Clinic
+
+  - id: generate_clarification_reply
+    script: scripts/generate_reply.py
+    when: ${steps.extract_appointment.needs_clarification == true}
+    input:
+      appointment: ${steps.extract_appointment}
+      clinic_name: Shafi Dental Clinic
+
+  - id: send_whatsapp
+    script: scripts/send_whatsapp.py
+    input:
+      appointment: ${steps.generate_reply_after_booking || steps.generate_clarification_reply}
+      whatsapp_access_token: ${secrets.u.meta.whatsapp_access_token}
+      whatsapp_phone_number_id: ${variables.u.meta.whatsapp_phone_number_id}
+      api_version: ${variables.u.meta.whatsapp_api_version}
