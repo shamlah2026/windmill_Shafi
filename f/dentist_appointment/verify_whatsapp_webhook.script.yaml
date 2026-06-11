@@ -7,6 +7,10 @@ schema:
   $schema: https://json-schema.org/draft/2020-12/schema
   type: object
   properties:
+    body:
+      type: ''
+      description: ''
+      default: null
     query:
       type: ''
       description: ''
@@ -16,5 +20,4 @@ schema:
       description: ''
       default: null
       originalType: string
-  required:
-    - query
+  required: []
