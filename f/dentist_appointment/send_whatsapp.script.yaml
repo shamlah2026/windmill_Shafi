@@ -16,10 +16,16 @@ schema:
       type: ''
       description: ''
       default: null
-    whatsapp:
-      type: ''
+    patient_phone:
+      type: string
       description: ''
       default: null
+      originalType: string
+    reply_text:
+      type: string
+      description: ''
+      default: null
+      originalType: string
     whatsapp_access_token:
       type: string
       description: ''
@@ -30,5 +36,4 @@ schema:
       description: ''
       default: null
       originalType: string
-  required:
-    - appointment
+  required: []
