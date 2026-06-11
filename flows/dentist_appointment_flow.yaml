@@ -1,60 +1,84 @@
-# Windmill flow blueprint for the dentist appointment assistant.
+# Windmill Cloud flow blueprint.
 #
-# Important: Windmill may export flows using its own generated YAML schema.
-# Use this file as the intended orchestration map, then replace/update it with
-# Windmill's exported flow once the flow is built in the Cloud UI.
+# This is an implementation map for the Windmill UI. Windmill may export a
+# richer generated YAML format after you build the flow in Cloud; when it does,
+# keep the Windmill-generated export as the source of truth.
 
 name: dentist_appointment_flow
-summary: Receive WhatsApp appointment requests, check calendar availability, book, and reply.
-trigger:
-  type: webhook
-  source: meta_whatsapp
+summary: WhatsApp webhook -> extract appointment -> check calendar -> create event -> reply
 
-inputs:
-  payload: Meta WhatsApp webhook JSON body
+webhook:
+  provider: meta_whatsapp
+  post_handler: f/dentist_appointment/extract_appointment.py
+  verification_handler: f/dentist_appointment/verify_whatsapp_webhook.py
+
+windmill_paths:
+  extract_appointment: f/dentist_appointment/extract_appointment.py
+  check_calendar_availability: f/dentist_appointment/check_calendar_availability.py
+  create_calendar_event: f/dentist_appointment/create_calendar_event.py
+  generate_reply: f/dentist_appointment/generate_reply.py
+  send_whatsapp: f/dentist_appointment/send_whatsapp.py
+
+resources:
+  whatsapp: u/meta/whatsapp
+  openai: u/openai/default
+  google_calendar: u/google/calendar
+
+variables:
+  clinic_name: u/clinic/name
+  clinic_timezone: u/clinic/timezone
+  whatsapp_verify_token: u/meta/whatsapp_verify_token
+  whatsapp_access_token: u/meta/whatsapp_access_token
+  whatsapp_phone_number_id: u/meta/whatsapp_phone_number_id
+  whatsapp_api_version: u/meta/whatsapp_api_version
+  openai_api_key: u/openai/api_key
+  openai_model: u/openai/model
+  google_calendar_access_token: u/google/calendar_access_token
+  google_calendar_id: u/google/calendar_id
 
 steps:
   - id: extract_appointment
-    script: scripts/extract_appointment.py
-    input:
+    path: f/dentist_appointment/extract_appointment.py
+    args:
       payload: ${flow.input.payload}
       default_duration_minutes: 30
+      clinic_timezone: ${var.u/clinic/timezone}
 
   - id: check_calendar_availability
-    script: scripts/check_calendar_availability.py
+    path: f/dentist_appointment/check_calendar_availability.py
     when: ${steps.extract_appointment.needs_clarification == false}
-    input:
+    args:
       appointment: ${steps.extract_appointment}
-      google_access_token: ${secrets.u.google.calendar_access_token}
-      calendar_id: ${variables.u.google.calendar_id}
+      google_calendar: ${res.u/google/calendar}
+      calendar_id: ${var.u/google/calendar_id}
 
   - id: create_calendar_event
-    script: scripts/create_calendar_event.py
+    path: f/dentist_appointment/create_calendar_event.py
     when: ${steps.check_calendar_availability.available == true}
-    input:
+    args:
       appointment: ${steps.check_calendar_availability}
-      google_access_token: ${secrets.u.google.calendar_access_token}
-      calendar_id: ${variables.u.google.calendar_id}
-      clinic_timezone: Europe/Berlin
+      google_calendar: ${res.u/google/calendar}
+      calendar_id: ${var.u/google/calendar_id}
+      clinic_timezone: ${var.u/clinic/timezone}
 
-  - id: generate_reply_after_booking
-    script: scripts/generate_reply.py
+  - id: generate_reply_booked_or_unavailable
+    path: f/dentist_appointment/generate_reply.py
     when: ${steps.extract_appointment.needs_clarification == false}
-    input:
+    args:
       appointment: ${steps.create_calendar_event || steps.check_calendar_availability}
-      clinic_name: Shafi Dental Clinic
+      clinic_name: ${var.u/clinic/name}
+      openai: ${res.u/openai/default}
 
-  - id: generate_clarification_reply
-    script: scripts/generate_reply.py
+  - id: generate_reply_clarification
+    path: f/dentist_appointment/generate_reply.py
     when: ${steps.extract_appointment.needs_clarification == true}
-    input:
+    args:
       appointment: ${steps.extract_appointment}
-      clinic_name: Shafi Dental Clinic
+      clinic_name: ${var.u/clinic/name}
+      openai: ${res.u/openai/default}
 
   - id: send_whatsapp
-    script: scripts/send_whatsapp.py
-    input:
-      appointment: ${steps.generate_reply_after_booking || steps.generate_clarification_reply}
-      whatsapp_access_token: ${secrets.u.meta.whatsapp_access_token}
-      whatsapp_phone_number_id: ${variables.u.meta.whatsapp_phone_number_id}
-      api_version: ${variables.u.meta.whatsapp_api_version}
+    path: f/dentist_appointment/send_whatsapp.py
+    args:
+      appointment: ${steps.generate_reply_booked_or_unavailable || steps.generate_reply_clarification}
+      whatsapp: ${res.u/meta/whatsapp}
