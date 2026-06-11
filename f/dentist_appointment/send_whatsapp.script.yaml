@@ -7,15 +7,6 @@ schema:
   $schema: https://json-schema.org/draft/2020-12/schema
   type: object
   properties:
-    api_version:
-      type: string
-      description: ''
-      default: null
-      originalType: string
-    appointment:
-      type: ''
-      description: ''
-      default: null
     patient_phone:
       type: string
       description: ''
@@ -26,14 +17,6 @@ schema:
       description: ''
       default: null
       originalType: string
-    whatsapp_access_token:
-      type: string
-      description: ''
-      default: null
-      originalType: string
-    whatsapp_phone_number_id:
-      type: string
-      description: ''
-      default: null
-      originalType: string
-  required: []
+  required:
+    - patient_phone
+    - reply_text
