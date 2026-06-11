@@ -21,7 +21,7 @@ def main(
     verify_token: str | None = None,
 ) -> str:
     """Return Meta's webhook challenge when the verify token matches."""
-    expected = verify_token or _get_variable("u/meta/whatsapp_verify_token")
+    expected = verify_token or _get_variable("u/shamlahtanai/whatsapp_verify_token")
     mode = query.get("hub.mode") or query.get("mode")
     token = query.get("hub.verify_token") or query.get("verify_token")
     challenge = query.get("hub.challenge") or query.get("challenge")

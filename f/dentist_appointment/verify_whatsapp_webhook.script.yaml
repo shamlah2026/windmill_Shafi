@@ -6,5 +6,15 @@ kind: script
 schema:
   $schema: https://json-schema.org/draft/2020-12/schema
   type: object
-  properties: {}
-  required: []
+  properties:
+    query:
+      type: ''
+      description: ''
+      default: null
+    verify_token:
+      type: string
+      description: ''
+      default: null
+      originalType: string
+  required:
+    - query
