@@ -4,8 +4,14 @@ import requests
 
 try:
     import wmill
-except Exception:  # pragma: no cover
+except Exception:
     wmill = None
+
+
+WHATSAPP_RESOURCE = "u/shamlahtanai/whatsapp"
+WHATSAPP_ACCESS_TOKEN = "u/shamlahtanai/whatsapp_access_token"
+WHATSAPP_PHONE_NUMBER_ID = "u/shamlahtanai/whatsapp_phone_number_id"
+WHATSAPP_API_VERSION = "u/shamlahtanai/whatsapp_api_version"
 
 
 def _get_variable(path: str, default: Any = None) -> Any:
@@ -34,14 +40,32 @@ def _whatsapp_config(
     whatsapp_phone_number_id: str | None,
     api_version: str | None,
 ) -> tuple[str, str, str]:
-    resource = whatsapp or _get_resource("u/meta/whatsapp")
-    token = whatsapp_access_token or resource.get("access_token") or resource.get("token") or _get_variable("u/meta/whatsapp_access_token")
-    phone_number_id = whatsapp_phone_number_id or resource.get("phone_number_id") or _get_variable("u/meta/whatsapp_phone_number_id")
-    version = api_version or resource.get("api_version") or _get_variable("u/meta/whatsapp_api_version", "v23.0")
+    resource = whatsapp or _get_resource(WHATSAPP_RESOURCE)
+
+    token = (
+        whatsapp_access_token
+        or resource.get("access_token")
+        or resource.get("token")
+        or _get_variable(WHATSAPP_ACCESS_TOKEN)
+    )
+
+    phone_number_id = (
+        whatsapp_phone_number_id
+        or resource.get("phone_number_id")
+        or _get_variable(WHATSAPP_PHONE_NUMBER_ID)
+    )
+
+    version = (
+        api_version
+        or resource.get("api_version")
+        or _get_variable(WHATSAPP_API_VERSION, "v25.0")
+    )
+
     if not token:
-        raise ValueError("Missing WhatsApp access token. Configure u/meta/whatsapp resource or u/meta/whatsapp_access_token variable.")
+        raise ValueError("Missing WhatsApp access token.")
     if not phone_number_id:
-        raise ValueError("Missing WhatsApp phone number id. Configure u/meta/whatsapp resource or u/meta/whatsapp_phone_number_id variable.")
+        raise ValueError("Missing WhatsApp phone number id.")
+
     return token, phone_number_id, version
 
 
@@ -53,14 +77,22 @@ def main(
     api_version: str | None = None,
 ) -> dict[str, Any]:
     """Send the generated reply through the Meta WhatsApp Cloud API."""
+
     to_phone = appointment.get("patient_phone")
     reply_text = appointment.get("reply_text")
+
     if not to_phone:
         raise ValueError("patient_phone is required")
     if not reply_text:
         raise ValueError("reply_text is required")
 
-    token, phone_number_id, version = _whatsapp_config(whatsapp, whatsapp_access_token, whatsapp_phone_number_id, api_version)
+    token, phone_number_id, version = _whatsapp_config(
+        whatsapp,
+        whatsapp_access_token,
+        whatsapp_phone_number_id,
+        api_version,
+    )
+
     response = requests.post(
         f"https://graph.facebook.com/{version}/{phone_number_id}/messages",
         headers={"Authorization": f"Bearer {token}"},
@@ -73,6 +105,11 @@ def main(
         },
         timeout=20,
     )
+
     response.raise_for_status()
 
-    return {**appointment, "whatsapp_sent": True, "whatsapp_response": response.json()}
+    return {
+        **appointment,
+        "whatsapp_sent": True,
+        "whatsapp_response": response.json(),
+    }

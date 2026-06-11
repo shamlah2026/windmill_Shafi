@@ -6,5 +6,29 @@ kind: script
 schema:
   $schema: https://json-schema.org/draft/2020-12/schema
   type: object
-  properties: {}
-  required: []
+  properties:
+    api_version:
+      type: string
+      description: ''
+      default: null
+      originalType: string
+    appointment:
+      type: ''
+      description: ''
+      default: null
+    whatsapp:
+      type: ''
+      description: ''
+      default: null
+    whatsapp_access_token:
+      type: string
+      description: ''
+      default: null
+      originalType: string
+    whatsapp_phone_number_id:
+      type: string
+      description: ''
+      default: null
+      originalType: string
+  required:
+    - appointment
