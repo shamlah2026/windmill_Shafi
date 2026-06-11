@@ -1,30 +1,20 @@
 from typing import Any
-
 import wmill
-
 
 VERIFY_TOKEN_PATH = "u/shamlahtanai/whatsapp_verify_token"
 
 
 def main(
-    query: dict[str, Any] | None = None,
     body: dict[str, Any] | None = None,
+    query: dict[str, Any] | None = None,
     verify_token: str | None = None,
 ) -> Any:
-    """
-    Meta WhatsApp webhook endpoint.
-
-    1. GET verification:
-       Meta sends hub.mode, hub.verify_token, hub.challenge.
-       We return hub.challenge.
-
-    2. POST incoming messages:
-       Meta sends WhatsApp message payload.
-       We return parsed sender and text for testing.
-    """
-
-    query = query or {}
     body = body or {}
+    query = query or {}
+
+    # Windmill HTTP route may put request data in body
+    if not query and isinstance(body, dict):
+        query = body.get("query", {}) or body.get("args", {}) or {}
 
     expected_token = verify_token or wmill.get_variable(VERIFY_TOKEN_PATH)
 
@@ -49,16 +39,15 @@ def main(
             "received": True,
             "message_found": False,
             "body": body,
+            "query": query,
         }
 
     message = messages[0]
-    sender_phone = message.get("from")
-    text = message.get("text", {}).get("body")
 
     return {
         "received": True,
         "message_found": True,
-        "patient_phone": sender_phone,
-        "message_text": text,
+        "patient_phone": message.get("from"),
+        "message_text": message.get("text", {}).get("body"),
         "raw_message": message,
     }
