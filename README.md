@@ -1,85 +1,104 @@
 # Windmill Dentist Appointment Assistant
 
-End-to-end starter for handling WhatsApp dentist appointment requests with Windmill.
-
-The target flow is:
-
-1. Receive a WhatsApp webhook payload from Meta.
-2. Extract the patient message, phone number, requested date/time, and appointment details.
-3. Check calendar availability.
-4. Create a calendar event when the slot is available.
-5. Generate a patient-friendly reply.
-6. Send the reply through the WhatsApp Cloud API.
-
-## Repository layout
+End-to-end Windmill Cloud project for a dentist appointment assistant:
 
 ```text
-windmill-dentist-appointment/
-├── scripts/
-│   ├── extract_appointment.py
-│   ├── check_calendar_availability.py
-│   ├── create_calendar_event.py
-│   ├── generate_reply.py
-│   └── send_whatsapp.py
-├── flows/
-│   └── dentist_appointment_flow.yaml
-├── AGENTS.md
-└── README.md
+WhatsApp webhook -> extract appointment -> check calendar -> create event if free -> generate reply -> send WhatsApp reply
 ```
 
-## Windmill Cloud setup
+## Windmill Cloud layout
 
-Use your empty GitHub repository with Windmill Git Sync.
+Windmill Git Sync is configured through `wmill.yaml` and currently syncs `f/**`. The Cloud-ready scripts are therefore under:
 
-1. Open Windmill Cloud.
-2. Go to Workspace settings -> Git Sync.
-3. Add a Git repository connection for:
-   `https://github.com/shamlah2026/windmill_Shafi.git`
-4. Prefer the Windmill GitHub App connection if available.
-5. If you use a Personal Access Token instead, it needs read/write access to repository contents.
-6. Save the connection.
-7. If Windmill asks to initialize the repository, skip initialization if these files already exist. Otherwise let Windmill create `wmill.yaml`, then pull/merge this code.
+```text
+f/dentist_appointment/
+├── extract_appointment.py
+├── verify_whatsapp_webhook.py
+├── check_calendar_availability.py
+├── create_calendar_event.py
+├── generate_reply.py
+└── send_whatsapp.py
+```
 
-Windmill's Git Sync docs say an empty repo is the recommended starting point, and Windmill can create `wmill.yaml` and push workspace content during initialization.
+The same scripts are mirrored under `scripts/` for local editing, notebook experiments, and readability:
 
-## Windmill variables and secrets
+```text
+scripts/
+├── extract_appointment.py
+├── verify_whatsapp_webhook.py
+├── check_calendar_availability.py
+├── create_calendar_event.py
+├── generate_reply.py
+└── send_whatsapp.py
+```
 
-Create these in Windmill as secrets or resources. Do not commit them to Git.
+## Windmill resources and variables
 
-### WhatsApp / Meta
+Do not commit secrets. Create these in Windmill Cloud.
 
-- `u/meta/whatsapp_access_token`: permanent or long-lived WhatsApp Cloud API token.
-- `u/meta/whatsapp_phone_number_id`: Phone Number ID from Meta.
-- `u/meta/whatsapp_verify_token`: token you choose for webhook verification.
-- `u/meta/whatsapp_api_version`: optional, for example `v23.0`.
+### Preferred resources
 
-### Calendar
+Create these as Windmill resources when possible:
 
-- `u/google/calendar_access_token`: Google OAuth access token or resource-backed token.
-- `u/google/calendar_id`: calendar id, usually `primary` or the clinic calendar email.
+- `u/meta/whatsapp`
+  - `access_token`
+  - `phone_number_id`
+  - `api_version`, for example `v23.0`
+- `u/openai/default`
+  - `api_key`
+  - `model`, for example `gpt-4.1-mini`
+- `u/google/calendar`
+  - `access_token`
 
-For production, prefer a proper Windmill resource/OAuth connection over copying access tokens manually.
+### Supported fallback variables
+
+The scripts also support these variables/secrets:
+
+- `u/clinic/name`
+- `u/clinic/timezone`, for example `Europe/Berlin`
+- `u/meta/whatsapp_verify_token`
+- `u/meta/whatsapp_access_token`
+- `u/meta/whatsapp_phone_number_id`
+- `u/meta/whatsapp_api_version`
+- `u/openai/api_key`
+- `u/openai/model`
+- `u/google/calendar_access_token`
+- `u/google/calendar_id`, usually `primary` or the clinic calendar email
+
+## Scripts
+
+Every Python script exposes a Windmill-compatible `main()` function.
+
+- `extract_appointment.py`: parses Meta WhatsApp webhook payloads and extracts patient phone, message text, requested start time, duration, and clarification status.
+- `verify_whatsapp_webhook.py`: returns Meta's challenge when the webhook verify token matches.
+- `check_calendar_availability.py`: calls Google Calendar FreeBusy and returns whether the requested slot is available.
+- `create_calendar_event.py`: creates a Google Calendar event only when the slot is free.
+- `generate_reply.py`: uses OpenAI when configured and falls back to a deterministic template when not configured.
+- `send_whatsapp.py`: sends the final text message with the Meta WhatsApp Cloud API.
+
+## Build the Windmill flow
+
+Use `flows/dentist_appointment_flow.yaml` as the wiring map. In Windmill Cloud, create a flow with these steps:
+
+1. `extract_appointment`: `f/dentist_appointment/extract_appointment.py`
+2. If `needs_clarification` is false: `check_calendar_availability`
+3. If `available` is true: `create_calendar_event`
+4. `generate_reply` using either the booking result, unavailable result, or clarification result
+5. `send_whatsapp`
+
+For Meta webhook verification, use `f/dentist_appointment/verify_whatsapp_webhook.py` with the verify token stored in `u/meta/whatsapp_verify_token`.
 
 ## Meta WhatsApp setup checklist
 
-1. Go to Meta for Developers.
-2. Create or open an app.
-3. Add WhatsApp product.
-4. Add or connect a WhatsApp Business phone number.
-5. Copy the Phone Number ID.
-6. Generate a token for the WhatsApp Cloud API.
-7. Configure a webhook callback URL from Windmill.
-8. Subscribe to WhatsApp `messages` webhook events.
-9. Store token, phone number id, and verify token in Windmill secrets.
+1. In Meta for Developers, create or open an app.
+2. Add the WhatsApp product.
+3. Add or connect your WhatsApp Business phone number.
+4. Copy the Phone Number ID into Windmill.
+5. Create a long-lived/permanent access token and store it as a Windmill secret/resource.
+6. Configure the Windmill webhook URL in Meta.
+7. Subscribe to WhatsApp `messages` webhook events.
+8. Test with a simple message such as `I need a dentist appointment tomorrow at 10:30`.
 
-## Development order
+## Local notebook use
 
-1. Deploy `scripts/extract_appointment.py` first and test it with a sample WhatsApp webhook payload.
-2. Deploy `scripts/generate_reply.py` second so you can test the response text without external APIs.
-3. Add `scripts/send_whatsapp.py` after Meta token and phone number id are ready.
-4. Add calendar availability and event creation after Google Calendar auth is ready.
-5. Wire everything into a Windmill flow.
-
-## Notes
-
-The scripts are written with Windmill-friendly `main(...)` functions. The flow YAML is a blueprint for the intended orchestration; if Windmill generates its own exported flow schema, use the Windmill-generated YAML as the source of truth and keep this flow updated from Windmill Git Sync.
+Your `windmill_Whatsapp.ipynb` can import or copy from `scripts/` for local experiments. The production Windmill source of truth is `f/dentist_appointment/` because that is what Git Sync includes.
