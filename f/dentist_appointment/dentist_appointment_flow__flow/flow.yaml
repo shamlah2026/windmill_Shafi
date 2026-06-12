@@ -1,0 +1,25 @@
+summary: ''
+description: ''
+value:
+  modules: []
+has_on_behalf_of: false
+schema:
+  $schema: https://json-schema.org/draft/2020-12/schema
+  type: object
+  order:
+    - patient_phone
+    - message_text
+  properties:
+    message_text:
+      type: string
+      description: ''
+      default: ''
+      nullable: false
+    patient_phone:
+      type: string
+      description: ''
+      default: ''
+      nullable: false
+  required:
+    - patient_phone
+    - message_text
