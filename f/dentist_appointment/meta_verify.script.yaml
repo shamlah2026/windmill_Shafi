@@ -1,0 +1,25 @@
+summary: ''
+description: ''
+lock: '!inline f/dentist_appointment/meta_verify.script.lock'
+has_on_behalf_of: false
+kind: script
+schema:
+  $schema: https://json-schema.org/draft/2020-12/schema
+  type: object
+  properties:
+    hub_challenge:
+      type: string
+      description: ''
+      default: ''
+      originalType: string
+    hub_mode:
+      type: string
+      description: ''
+      default: ''
+      originalType: string
+    hub_verify_token:
+      type: string
+      description: ''
+      default: ''
+      originalType: string
+  required: []
