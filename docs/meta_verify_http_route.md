@@ -54,13 +54,7 @@ u/shamlahtanai/whatsapp_verify_token = ShafiDentistWebhook2026!
 
 ## Test
 
-Open this URL in the browser:
-
-```text
-https://app.windmill.dev/api/r/shamlah/meta-verify?hub.mode=subscribe&hub_verify_token=ShafiDentistWebhook2026!&hub.challenge=123456
-```
-
-The URL above uses `hub_verify_token` only as a fallback test. Meta's real URL should use this exact version:
+Open this exact URL in the browser:
 
 ```text
 https://app.windmill.dev/api/r/shamlah/meta-verify?hub.mode=subscribe&hub.verify_token=ShafiDentistWebhook2026!&hub.challenge=123456
