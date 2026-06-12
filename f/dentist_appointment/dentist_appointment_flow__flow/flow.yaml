@@ -1,7 +1,45 @@
 summary: ''
 description: ''
 value:
-  modules: []
+  modules:
+    - id: a
+      value:
+        type: script
+        input_transforms: {}
+        is_trigger: false
+        path: f/dentist_appointment/extract_appointment
+      continue_on_error: false
+    - id: b
+      value:
+        type: script
+        input_transforms: {}
+        is_trigger: false
+        path: f/dentist_appointment/check_calendar_availability
+    - id: c
+      value:
+        type: script
+        input_transforms: {}
+        is_trigger: false
+        path: f/dentist_appointment/create_calendar_event
+    - id: d
+      value:
+        type: script
+        input_transforms: {}
+        is_trigger: false
+        path: f/dentist_appointment/generate_reply
+    - id: e
+      value:
+        type: script
+        input_transforms:
+          patient_phone:
+            type: static
+            value: '393514545383'
+          reply_text:
+            type: static
+            value: Hello, I want appointment tomorrow at 10 with Dr Ali
+        is_trigger: false
+        path: f/dentist_appointment/send_whatsapp
+  groups: []
 has_on_behalf_of: false
 schema:
   $schema: https://json-schema.org/draft/2020-12/schema
@@ -16,10 +54,9 @@ schema:
       default: ''
       nullable: false
     patient_phone:
-      type: string
+      type: object
       description: ''
-      default: ''
-      nullable: false
+      default: null
   required:
     - patient_phone
     - message_text
