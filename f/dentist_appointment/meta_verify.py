@@ -42,13 +42,25 @@ def main(
     if not messages:
         return {"received": True, "message_found": False, "body": body}
 
+    if not messages:
+        return {"received": True, "message_found": False, "body": body}
+
     msg = messages[0]
     text = msg.get("text", {}).get("body", "")
     phone = msg.get("from", "")
+
+    job_id = wmill.run_flow_async(
+        "f/dentist_appointment/dentist_appointment_flow",
+        args={
+            "patient_phone": phone,
+            "message_text": text,
+        },
+    )
 
     return {
         "received": True,
         "message_found": True,
         "patient_phone": phone,
         "message_text": text,
+        "flow_job_id": job_id,
     }
