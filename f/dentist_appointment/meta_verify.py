@@ -20,7 +20,6 @@ def main(
     hub_challenge: str = "",
     verify_token: str | None = None,
 ) -> dict[str, Any]:
-    """Verify Meta WhatsApp webhook setup and return the challenge as plain text."""
     expected = verify_token or wmill.get_variable(VERIFY_TOKEN_PATH)
 
     if hub_mode == "subscribe" and hub_verify_token == expected and hub_challenge:
