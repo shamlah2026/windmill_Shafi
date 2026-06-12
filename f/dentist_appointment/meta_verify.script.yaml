@@ -8,6 +8,10 @@ schema:
   $schema: https://json-schema.org/draft/2020-12/schema
   type: object
   properties:
+    event:
+      type: ''
+      description: ''
+      default: null
     hub_challenge:
       type: string
       description: ''
@@ -22,10 +26,5 @@ schema:
       type: string
       description: ''
       default: ''
-      originalType: string
-    verify_token:
-      type: string
-      description: ''
-      default: null
       originalType: string
   required: []
