@@ -5,14 +5,35 @@ value:
     - id: a
       value:
         type: script
-        input_transforms: {}
+        input_transforms:
+          clinic_timezone:
+            type: static
+            value: Europe/Rome
+          default_duration_minutes:
+            type: static
+            value: 30
+          message_text:
+            type: static
+            value: Hello, I want appointment tomorrow at 10 with Dr Ali
+          now_iso:
+            type: static
+            value: ''
+          patient_name:
+            type: static
+            value: ''
+          patient_phone:
+            type: static
+            value: '393514545383'
         is_trigger: false
         path: f/dentist_appointment/extract_appointment
       continue_on_error: false
-    - id: b
+    - id: f
       value:
         type: script
-        input_transforms: {}
+        input_transforms:
+          appointment:
+            type: static
+            value: null
         is_trigger: false
         path: f/dentist_appointment/check_calendar_availability
     - id: c
