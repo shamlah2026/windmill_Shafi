@@ -6,7 +6,7 @@ Use this for the Windmill Cloud HTTP route:
 GET https://app.windmill.dev/api/r/shamlah/meta-verify
 ```
 
-Meta will call it with dotted query parameters:
+Meta calls it with dotted query parameters:
 
 ```text
 ?hub.mode=subscribe&hub.verify_token=...&hub.challenge=123456
@@ -28,32 +28,21 @@ The verification request is a GET request with query parameters, so body process
 
 ## Preprocessor
 
-Add this preprocessor to the HTTP route:
+Do not look for a separate preprocessor field in the HTTP route UI.
 
-```ts
-export async function preprocessor(event: {
-  kind: "http";
-  query: Record<string, string>;
-}) {
-  if (event.kind !== "http") {
-    throw new Error(`Expected HTTP route event, got ${event.kind}`);
-  }
+The script itself defines a Python `preprocessor(event)` function. Windmill calls that function for HTTP route events before it calls `main()`. The preprocessor reads these exact Meta query names:
 
-  return {
-    hub_mode: event.query["hub.mode"] ?? event.query["hub_mode"] ?? event.query["mode"] ?? "",
-    hub_verify_token:
-      event.query["hub.verify_token"] ??
-      event.query["hub_verify_token"] ??
-      event.query["verify_token"] ??
-      "",
-    hub_challenge:
-      event.query["hub.challenge"] ??
-      event.query["hub_challenge"] ??
-      event.query["challenge"] ??
-      "",
-  };
-}
-```
+- `hub.mode`
+- `hub.verify_token`
+- `hub.challenge`
+
+Then it maps them into normal Python arguments:
+
+- `hub_mode`
+- `hub_verify_token`
+- `hub_challenge`
+
+This is why the exact Meta URL works without changing the query string.
 
 ## Windmill variable
 
@@ -66,6 +55,12 @@ u/shamlahtanai/whatsapp_verify_token = ShafiDentistWebhook2026!
 ## Test
 
 Open this URL in the browser:
+
+```text
+https://app.windmill.dev/api/r/shamlah/meta-verify?hub.mode=subscribe&hub_verify_token=ShafiDentistWebhook2026!&hub.challenge=123456
+```
+
+The URL above uses `hub_verify_token` only as a fallback test. Meta's real URL should use this exact version:
 
 ```text
 https://app.windmill.dev/api/r/shamlah/meta-verify?hub.mode=subscribe&hub.verify_token=ShafiDentistWebhook2026!&hub.challenge=123456
