@@ -59,8 +59,8 @@ value:
         type: script
         input_transforms:
           patient_phone:
-            type: static
-            value: '393514545383'
+            type: javascript
+            expr: '`${results.b.patient_phone}`'
           reply_text:
             type: static
             value: "✅ Appointment confirmed!\r
