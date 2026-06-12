@@ -1,7 +1,15 @@
 from typing import Any
 
 
-def main(appointment: dict[str, Any]) -> dict[str, Any]:
+def main(appointment: dict[str, Any] | None = None) -> dict[str, Any]:
+    if appointment is None:
+        return {
+            "available": False,
+            "availability_reason": "missing_appointment_input",
+            "requested_end": None,
+            "busy": [],
+        }
+
     requested_start = appointment.get("requested_start")
 
     if not requested_start:

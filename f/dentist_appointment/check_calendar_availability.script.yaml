@@ -11,5 +11,4 @@ schema:
       type: ''
       description: ''
       default: null
-  required:
-    - appointment
+  required: []
