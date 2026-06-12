@@ -39,13 +39,19 @@ value:
     - id: c
       value:
         type: script
-        input_transforms: {}
+        input_transforms:
+          appointment:
+            type: static
+            value: null
         is_trigger: false
         path: f/dentist_appointment/create_calendar_event
-    - id: d
+    - id: g
       value:
         type: script
-        input_transforms: {}
+        input_transforms:
+          appointment:
+            type: static
+            value: null
         is_trigger: false
         path: f/dentist_appointment/generate_reply
     - id: e
@@ -56,8 +62,8 @@ value:
             type: static
             value: '393514545383'
           reply_text:
-            type: static
-            value: Hello, I want appointment tomorrow at 10 with Dr Ali
+            type: javascript
+            expr: '`${results.d.reply_text}`'
         is_trigger: false
         path: f/dentist_appointment/send_whatsapp
   groups: []
