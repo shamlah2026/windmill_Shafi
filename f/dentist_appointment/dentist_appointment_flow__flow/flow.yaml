@@ -62,8 +62,23 @@ value:
             type: static
             value: '393514545383'
           reply_text:
-            type: javascript
-            expr: '`${results.d.reply_text}`'
+            type: static
+            value: "✅ Appointment confirmed!\r
+
+              \r
+
+              👤 Patient: Patient\r
+
+              🦷 Doctor: our dentist\r
+
+              📅 Date & Time: your requested time\r
+
+              📍 Address: Via Roma 25, 27100 Pavia, Italy\r
+
+              \r
+
+              Thank you for choosing Pavia Smile Dental Clinic. See you soon!
+              😊"
         is_trigger: false
         path: f/dentist_appointment/send_whatsapp
   groups: []
